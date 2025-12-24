@@ -1,25 +1,41 @@
-# 📦 Streamlit App Starter Kit 
-```
-⬆️ (Replace above with your app's name)
-```
+# 🚚 São Paulo Professional Drivers Analysis
 
-Description of the app ...
+This application analyzes open data provided by Detran-SP, the governmental agency responsible for issuing and regulating driver's licenses in São Paulo, Brazil.
 
-## Demo App
+The dashboard provides insights into the distribution of drivers qualified for commercial vehicles (trucks, buses, and heavy-duty vehicles). This dataset represents the "Professional Drivers" segment, which is the backbone of the state's logistics sector.
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://app-starter-kit.streamlit.app/)
+## 🛠️ Tech Stack
 
-## GitHub Codespaces
+**Framework**: Streamlit
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/app-starter-kit?quickstart=1)
+**Python Libs**: E.g: Pandas, Plotly
 
-## Section Heading
+**Environment Management**: Conda / Pip
 
-This is filler text, please replace this with text for this section.
+## 🚀 Getting Started
 
-## Further Reading
+Follow these instructions to get the project up and running on your local machine.
 
-This is filler text, please replace this with a explanatory text about further relevant resources for this repo
-- Resource 1
-- Resource 2
-- Resource 3
+
+- **Python** 3.12
+
+- **Conda** (optional, but recommended)
+
+### Installation
+- Create a virtual environment:
+
+`$ conda create -n sp-logistics python=3.12`
+
+- Activate the environment:
+
+`$ conda activate sp-logistics`
+
+- Install the dependencies:
+
+`$ pip install -r requirements.txt`
+
+- Run the application:
+
+`$ streamlit run streamlit_app.py`
+
+**Note**: The analysis is based on the ```condutores_habilitados_ativos_incrementado.csv``` file, which serves as our local data source.
