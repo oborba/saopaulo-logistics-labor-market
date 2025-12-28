@@ -5,6 +5,7 @@ import folium
 import branca.colormap as cm
 from folium.plugins import HeatMap
 from streamlit_folium import st_folium
+import numpy as np
 
 # Page configuration (must be the first thing in Streamlit)
 st.set_page_config(page_title='Logistica Pesada SP', page_icon='🚗', layout='wide')
@@ -82,7 +83,7 @@ def main():
         st.metric(
             label='Exercem Atividade Remunerada',
             value=f'{total_paid_activity:,.0f}'.replace(',', '.'),
-            help=f'Condutores com EAR, necessário para qualquer categoria',
+            help='Condutores com EAR, necessário para qualquer categoria',
         )
         st.caption(f'ℹ️ {pct_paid_activity:.1f}% do total de condutores')
 
@@ -90,7 +91,7 @@ def main():
         st.metric(
             label='Habilitação Pesada (C, D, E)',
             value=f'{total_heavy_licenses:,.0f}'.replace(',', '.'),
-            help=f'Condutores que podem dirigir veículos pesados',
+            help='Condutores que podem dirigir veículos pesados',
         )
         st.caption(f'ℹ️ {pct_heavy_licenses:.1f}% do total de condutores')
 
@@ -268,7 +269,6 @@ def main():
     # SP Capital has so many drivers that it "drowns out" the rest of the state if we use raw values.
     # For visualization, Log helps to see medium hubs (like Ribeirão Preto or Campinas).
     # If you prefer raw, use: df_map['weight'] = df_map['qtd_condutores']
-    import numpy as np
 
     df_map['weight'] = np.log1p(df_map['qtd_condutores'])
 
@@ -569,19 +569,6 @@ def main():
     fig_cliff.update_layout(xaxis_tickangle=-45)  # Tilts X-axis text if it gets cramped
 
     st.plotly_chart(fig_cliff, use_container_width=True)
-
-    # Automatic analysis (Dynamic text)
-    # We take the peak of each group to comment
-    peak_light = (
-        df_cliff_chart[df_cliff_chart['grupo_comparativo'] == 'Leves (A, B, AB)']
-        .sort_values('qtd_condutores', ascending=False)
-        .iloc[0]['faixa_etaria']
-    )
-    peak_heavy = (
-        df_cliff_chart[df_cliff_chart['grupo_comparativo'] == 'Pesadas (C, D, E)']
-        .sort_values('qtd_condutores', ascending=False)
-        .iloc[0]['faixa_etaria']
-    )
 
     # ==============================================================================
     # SECTION: Logistics Demographic Risk (Filtered Scatter Map)
