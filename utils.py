@@ -3,6 +3,16 @@ import streamlit as st
 
 
 def classify_profile(row):
+    """Classifies a driver's profile based on their EAR status and CNH category.
+
+    Args:
+        row (pd.Series): A row from a pandas DataFrame containing 'exerce_atividade_remunerada'
+                         and 'categoria_cnh' columns.
+
+    Returns:
+        str: The classified profile type ('Amador', 'Logística Pesada/Tradicional',
+             'Gig Economy/Apps', or 'Outros').
+    """
     ear = row['exerce_atividade_remunerada']
     cat = row['categoria_cnh']
 
