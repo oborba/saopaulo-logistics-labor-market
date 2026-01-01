@@ -1,5 +1,9 @@
 import streamlit as st
 import utils
+import folium
+from folium.plugins import HeatMap
+from streamlit_folium import st_folium
+import numpy as np
 
 st.set_page_config(layout="wide")
 
@@ -35,6 +39,25 @@ def main():
 
     with col3:
         st.metric(label='Faixa etária predominante', value=predominant_age_group, help=helper_faixa_etaria)
+    
+    st.divider()
+    
+    st.header('Onde estão esses profissionais?')
+    st.subheader('Uma visão sobre a distribuição da força de trabalho ativa do estado')
+
+    ear_heavy_drivers_df = heavy_drivers_df[heavy_drivers_df['exerce_atividade_remunerada'] == 'S']
+    
+    heatmap_data = ear_heavy_drivers_df.groupby(['descricao_municipio', 'lat', 'lon'])['qtd_condutores'].sum().reset_index()
+    heatmap_data.dropna(subset=['lat', 'lon'], inplace=True)
+
+    map_center = [-22.5, -48.5]
+    m = folium.Map(location=map_center, zoom_start=7, tiles='CartoDB positron')
+
+    heat_data = [[row['lat'], row['lon'], np.log1p(row['qtd_condutores'])] for index, row in heatmap_data.iterrows()]
+
+    HeatMap(heat_data).add_to(m)
+
+    st_folium(m, use_container_width=True)
 
 if __name__ == '__main__':
     main()
