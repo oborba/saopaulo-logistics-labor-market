@@ -134,7 +134,9 @@ with st.container():
         ),
         yaxis=dict(title='Categoria CNH'),
         legend=dict(orientation="h", y=1.1, x=0.5, xanchor='center'),
-        height=500
+        height=500,
+        hovermode='y unified', # Added for touch UX
+        margin=dict(l=20, r=20, t=80, b=20) # Added for touch UX
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -207,7 +209,9 @@ with st.container():
             range=[0, 115], showgrid=False
         ),
         legend=dict(orientation="h", y=1.1, x=0.5, xanchor='center'),
-        height=500
+        height=500,
+        hovermode='x unified', # Added for touch UX
+        margin=dict(l=20, r=20, t=80, b=100) # Added for touch UX
     )
 
     st.plotly_chart(fig_ear, use_container_width=True)
@@ -246,34 +250,66 @@ with st.container():
     df_city_risk['Idade_Media'] = df_city_risk['Soma_Ponderada'] / df_city_risk['Total_Condutores']
     df_city_risk['Status_Risco'] = df_city_risk['Idade_Media'].apply(lambda x: '🚨 Crítico' if x > 50 else '⚠️ Atenção' if x > 45 else '✅ Estável')
 
-    # 2. Filtros e UI
+    # 2. UI Interativa (Default: Top 10, Opcional: Comparação)
     df_city_risk = df_city_risk.sort_values('Idade_Media', ascending=False)
-    top_20_cities = df_city_risk.head(20)['descricao_municipio'].tolist()
 
-    selected_cities = st.multiselect(
-        "Filtrar Municípios (Padrão: Top 20 maiores Idade Média)",
-        options=sorted(df_city_risk['descricao_municipio'].unique()),
-        default=top_20_cities
-    )
+    compare_mode = st.toggle("Quero comparar municípios específicos")
 
-    df_display = df_city_risk[df_city_risk['descricao_municipio'].isin(selected_cities)] if selected_cities else df_city_risk
-
-    st.dataframe(
-        df_display[['descricao_municipio', 'Total_Condutores', 'Idade_Media', 'Status_Risco']],
-        column_config={
-            "descricao_municipio": "Município",
-            "Total_Condutores": st.column_config.NumberColumn("Total CNH (C/D/E)", format="%d"),
-            "Idade_Media": st.column_config.ProgressColumn(
-                "Idade Média (Anos)",
-                format="%.1f",
-                min_value=30,
-                max_value=65,
-            ),
-            "Status_Risco": "Nível de Alerta"
-        },
-        use_container_width=True,
-        hide_index=True
-    )
+    if compare_mode:
+        selected_cities = st.multiselect(
+            "Selecione os municípios para comparar",
+            options=sorted(df_city_risk['descricao_municipio'].unique()),
+            default=[]
+        )
+        # Show dataframe only if cities are selected
+        if selected_cities:
+            df_display = df_city_risk[df_city_risk['descricao_municipio'].isin(selected_cities)]
+            st.dataframe(
+                df_display[['descricao_municipio', 'Total_Condutores', 'Idade_Media', 'Status_Risco']],
+                column_config={
+                    "descricao_municipio": "Município",
+                    "Total_Condutores": st.column_config.NumberColumn("Total CNH (C/D/E)", format="%d"),
+                    "Idade_Media": st.column_config.ProgressColumn(
+                        "Idade Média (Anos)",
+                        format="%.1f",
+                        min_value=df_city_risk['Idade_Media'].min(),
+                        max_value=df_city_risk['Idade_Media'].max(),
+                    ),
+                    "Status_Risco": "Nível de Alerta"
+                },
+                use_container_width=True,
+                hide_index=True
+            )
+    else:
+        with st.expander("🏆 Top 10 Municípios por Idade Média de Motoristas", expanded=True):
+            top_10_cities = df_city_risk.head(10)
+            
+            # Helper para criar colunas dinamicamente e evitar erro se houver menos de 10 cidades
+            num_cities = len(top_10_cities)
+            if num_cities > 0:
+                # Create 2 rows of 5 columns for the top 10
+                st.write("Top 1-5")
+                cols_1 = st.columns(5)
+                for i in range(min(5, num_cities)):
+                    row = top_10_cities.iloc[i]
+                    cols_1[i].metric(
+                        label=f"{i + 1}. {row['descricao_municipio']}",
+                        value=f"{row['Idade_Media']:.1f} anos",
+                        help=f"Total de motoristas: {row['Total_Condutores']}"
+                    )
+                
+                if num_cities > 5:
+                    st.write("Top 6-10")
+                    cols_2 = st.columns(5)
+                    for i in range(5, num_cities):
+                        row = top_10_cities.iloc[i]
+                        cols_2[i-5].metric(
+                            label=f"{i + 1}. {row['descricao_municipio']}",
+                            value=f"{row['Idade_Media']:.1f} anos",
+                            help=f"Total de motoristas: {row['Total_Condutores']}"
+                        )
+            else:
+                st.write("Nenhum dado de cidade para exibir.")
 
 # 1. DATA PREPARATION (Recalculating with Lat/Lon)
 
@@ -349,8 +385,10 @@ st.markdown("""
         border-radius: 10px;
         padding: 20px;
         border: 1px solid #e6e9ef;
-        height: 100%; /* Tenta ocupar a altura total da coluna */
+        height: 100%; /* Default for desktop */
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
     }
     .consulting-card h4 {
         color: #0e1117;
@@ -360,8 +398,17 @@ st.markdown("""
         border-bottom: 2px solid #ff4b4b;
     }
     .consulting-card p {
-        font-size: 16px;
+        font-size: 1rem;
         color: #31333F;
+        flex-grow: 1;
+    }
+
+    /* Media query for mobile devices */
+    @media (max-width: 768px) {
+        .consulting-card {
+            height: auto; /* Override for mobile */
+            margin-bottom: 1rem; /* Add space between stacked cards */
+        }
     }
 </style>
 """, unsafe_allow_html=True)

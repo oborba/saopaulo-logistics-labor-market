@@ -55,7 +55,7 @@ def main():
 
     heat_data = [[row['lat'], row['lon'], np.log1p(row['qtd_condutores'])] for index, row in heatmap_data.iterrows()]
 
-    HeatMap(heat_data).add_to(m)
+    HeatMap(heat_data, radius=12, blur=8).add_to(m)
 
     st_folium(m, use_container_width=True)
 
