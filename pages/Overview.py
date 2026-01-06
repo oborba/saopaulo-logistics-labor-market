@@ -5,7 +5,7 @@ from folium.plugins import HeatMap
 from streamlit_folium import st_folium
 import numpy as np
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="centered")
 
 def main():
     st.title('Panorama geral da categoria')
@@ -27,7 +27,7 @@ def main():
     
     helper_faixa_etaria = f'{predominant_age_group_count:,} condutores, que representam {predominant_age_group_percentage:.2f}% da categoria, com ou sem EAR'
 
-    st.subheader('Indicadores chave')
+    st.header('Indicadores chave')
 
     col1, col2, col3 = st.columns(3)
 
@@ -51,7 +51,7 @@ def main():
     heatmap_data.dropna(subset=['lat', 'lon'], inplace=True)
 
     map_center = [-22.5, -48.5]
-    m = folium.Map(location=map_center, zoom_start=7, tiles='CartoDB positron')
+    m = folium.Map(location=map_center, zoom_start=7, tiles='CartoDB positron', scrollWheelZoom=False)
 
     heat_data = [[row['lat'], row['lon'], np.log1p(row['qtd_condutores'])] for index, row in heatmap_data.iterrows()]
 

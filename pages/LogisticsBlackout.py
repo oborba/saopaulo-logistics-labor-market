@@ -279,13 +279,6 @@ with st.container():
 
 # Reuse df_alert (C, D, E filtered)
 # Define midpoints (same as block above)
-age_midpoints = {
-    '18-21 ANOS': 19.5, '22-25 ANOS': 23.5, '26-30 ANOS': 28.0,
-    '31-40 ANOS': 35.5, '41-50 ANOS': 45.5, '51-60 ANOS': 55.5,
-    '61-70 ANOS': 65.5, '71-80 ANOS': 75.5, '81-90 ANOS': 85.5,
-    '91-100 ANOS': 95.5, 'MAIOR DE 100 ANOS': 100.0
-}
-
 df_map_age = df_alert.copy()
 df_map_age['idade_media_faixa'] = df_map_age['faixa_etaria'].map(age_midpoints)
 df_map_age['soma_ponderada'] = df_map_age['idade_media_faixa'] * df_map_age['qtd_condutores']
@@ -304,6 +297,7 @@ risk_map = folium.Map(
     location=[-22.5, -48.5],
     zoom_start=7,
     tiles='cartodbpositron',  # 'Clean' style (light gray) to highlight heatmap colors
+    scrollWheelZoom=False # Disable scroll wheel zoom for mobile optimization
 )
 
 # Color Scale: Green (<40) -> Yellow (45) -> Red (>50)
