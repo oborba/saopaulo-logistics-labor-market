@@ -155,71 +155,111 @@ with st.container():
     st.subheader("Vocação Profissional: Quem realmente dirige?")
     st.markdown("Análise da proporção de condutores habilitados que efetivamente possuem a observação **EAR (Exerce Atividade Remunerada)** na CNH.")
 
-    # 1. Preparação dos Dados
-    # Agrupamento por idade e status de EAR
-    df_ear = df_alert.groupby(['faixa_etaria', 'exerce_atividade_remunerada'])['qtd_condutores'].sum().reset_index()
+    # --- UI FILTERS ---
+    col1, col2 = st.columns(2)
+    with col1:
+        city_list = ['Todas'] + sorted(df_alert['descricao_municipio'].unique())
+        selected_city = st.selectbox(
+            "Filtrar por município",
+            options=city_list,
+            key="ear_city_filter"
+        )
+    with col2:
+        category_options = ['C', 'D', 'E']
+        selected_categories = st.multiselect(
+            "Filtrar por categoria",
+            options=category_options,
+            default=category_options,
+            key="ear_category_filter"
+        )
 
-    # 2. Ordenação Cronológica (Crucial para o Eixo X)
-    age_order = [
-        '18-21 ANOS', '22-25 ANOS', '26-30 ANOS', '31-40 ANOS',
-        '41-50 ANOS', '51-60 ANOS', '61-70 ANOS', '71-80 ANOS',
-        '81-90 ANOS', '91-100 ANOS'
-    ]
-    
-    # Mapeamento de Labels para Legenda
-    df_ear['Status'] = df_ear['exerce_atividade_remunerada'].map({'S': 'Profissional (EAR)', 'N': 'Apenas Habilitado'})
+    # --- DATA FILTERING ---
+    df_filtered = df_alert.copy()
 
-    # 3. Preparação para Gráfico Combinado (Barras + Linha)
-    # Pivotar para calcular % de conversão
-    df_pivot = df_ear.pivot(index='faixa_etaria', columns='Status', values='qtd_condutores').fillna(0).reset_index()
+    if selected_city != 'Todas':
+        df_filtered = df_filtered[df_filtered['descricao_municipio'] == selected_city]
+
+    def simplify_category(cat):
+        if 'E' in cat: return 'E'
+        if 'D' in cat: return 'D'
+        if 'C' in cat: return 'C'
+        return cat
     
-    # Garantir existência das colunas (caso algum grupo não tenha dados)
-    for col in ['Profissional (EAR)', 'Apenas Habilitado']:
-        if col not in df_pivot.columns: df_pivot[col] = 0
+    if selected_categories:
+        df_filtered['categoria_simplificada'] = df_filtered['categoria_cnh'].apply(simplify_category)
+        df_filtered = df_filtered[df_filtered['categoria_simplificada'].isin(selected_categories)]
+    else:
+        # Create an empty dataframe with the same columns if no categories are selected
+        df_filtered = df_filtered.iloc[0:0]
+
+    # --- CHART LOGIC ---
+    if df_filtered.empty:
+        st.warning("Nenhum dado disponível para a seleção atual.")
+    else:
+        df_ear = df_filtered.groupby(['faixa_etaria', 'exerce_atividade_remunerada'])['qtd_condutores'].sum().reset_index()
         
-    df_pivot['Total'] = df_pivot['Profissional (EAR)'] + df_pivot['Apenas Habilitado']
-    df_pivot['Pct_EAR'] = (df_pivot['Profissional (EAR)'] / df_pivot['Total']) * 100
-    
-    # Ordenação Categórica
-    df_pivot['faixa_etaria'] = pd.Categorical(df_pivot['faixa_etaria'], categories=age_order, ordered=True)
-    df_pivot = df_pivot.sort_values('faixa_etaria')
+        if df_ear.empty:
+             st.warning("Nenhum dado disponível para a seleção atual.")
+        else:
+            age_order = [
+                '18-21 ANOS', '22-25 ANOS', '26-30 ANOS', '31-40 ANOS',
+                '41-50 ANOS', '51-60 ANOS', '61-70 ANOS', '71-80 ANOS',
+                '81-90 ANOS', '91-100 ANOS'
+            ]
+            df_ear['Status'] = df_ear['exerce_atividade_remunerada'].map({'S': 'Profissional (EAR)', 'N': 'Apenas Habilitado'})
 
-    # Construção do Gráfico Dual Axis
-    fig_ear = go.Figure()
+            df_pivot = df_ear.pivot(index='faixa_etaria', columns='Status', values='qtd_condutores')
+            # Reindex to ensure all age groups are present for a consistent chart axis
+            df_pivot = df_pivot.reindex(age_order, fill_value=0)
+            
+            for col in ['Profissional (EAR)', 'Apenas Habilitado']:
+                if col not in df_pivot.columns:
+                    df_pivot[col] = 0
+            
+            df_pivot = df_pivot.reset_index()
 
-    # Barra Única (Volume Total)
-    fig_ear.add_trace(go.Bar(
-        x=df_pivot['faixa_etaria'], y=df_pivot['Total'],
-        name='Total de Condutores', marker_color='#2c3e50'
-    ))
+            # Calculate Total and Percentage, avoiding division by zero
+            df_pivot['Total'] = df_pivot['Profissional (EAR)'] + df_pivot['Apenas Habilitado']
+            df_pivot['Pct_EAR'] = df_pivot.apply(
+                lambda row: (row['Profissional (EAR)'] / row['Total']) * 100 if row['Total'] > 0 else 0,
+                axis=1
+            )
 
-    # Linha de Percentual (Eixo Secundário)
-    fig_ear.add_trace(go.Scatter(
-        x=df_pivot['faixa_etaria'], y=df_pivot['Pct_EAR'],
-        name='% Conversão EAR', yaxis='y2',
-        mode='lines+markers+text',
-        line=dict(color='#D50000', width=3), # Vermelho para destaque
-        text=[f'{x:.0f}%' for x in df_pivot['Pct_EAR']],
-        textposition='top center',
-        hovertemplate='&#37; Conversão EAR: <b>%{y:.0f}%</b><extra></extra>'
-    ))
-    
-    fig_ear.update_layout(
-        title='Conversão Profissional: Volume vs Taxa de Atividade',
-        xaxis=dict(title='Faixa Etária', tickangle=-45),
-        yaxis=dict(title='Quantidade de Condutores'),
-        yaxis2=dict(
-            title='% Conversão EAR', overlaying='y', side='right',
-            range=[0, 115], showgrid=False
-        ),
-        legend=dict(orientation="h", y=1.1, x=0.5, xanchor='center'),
-        height=500,
-        hovermode='x unified', # Added for touch UX
-        margin=dict(l=20, r=20, t=80, b=100) # Added for touch UX
-    )
+            # Construção do Gráfico Dual Axis
+            fig_ear = go.Figure()
 
-    st.plotly_chart(fig_ear, use_container_width=True)
-    st.info("💡 **Insight:** Note como a taxa de conversão (Linha Vermelha) tende a se manter alta nas faixas centrais, mas a base total de condutores jovens é drasticamente menor.")
+            # Barra Única (Volume Total)
+            fig_ear.add_trace(go.Bar(
+                x=df_pivot['faixa_etaria'], y=df_pivot['Total'],
+                name='Total de Condutores', marker_color='#2c3e50'
+            ))
+
+            # Linha de Percentual (Eixo Secundário)
+            fig_ear.add_trace(go.Scatter(
+                x=df_pivot['faixa_etaria'], y=df_pivot['Pct_EAR'],
+                name='% Conversão EAR', yaxis='y2',
+                mode='lines+markers+text',
+                line=dict(color='#D50000', width=3),
+                text=[f'{x:.0f}%' for x in df_pivot['Pct_EAR']],
+                textposition='top center',
+                hovertemplate='&#37; Conversão EAR: <b>%{y:.0f}%</b><extra></extra>'
+            ))
+            
+            fig_ear.update_layout(
+                title='Conversão Profissional: Volume vs Taxa de Atividade',
+                xaxis=dict(title='Faixa Etária', tickangle=-45),
+                yaxis=dict(title='Quantidade de Condutores'),
+                yaxis2=dict(
+                    title='% Conversão EAR', overlaying='y', side='right',
+                    range=[0, 115], showgrid=False
+                ),
+                legend=dict(orientation="h", y=1.1, x=0.5, xanchor='center'),
+                height=500,
+                hovermode='x unified',
+                margin=dict(l=20, r=20, t=80, b=100)
+            )
+
+            st.plotly_chart(fig_ear, use_container_width=True)
 
 #
 # --- BLOCO 4: TABELA DE RISCO REGIONAL ---
