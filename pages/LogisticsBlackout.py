@@ -7,6 +7,9 @@ import branca.colormap as cm
 from streamlit_folium import st_folium
 import numpy as np
 
+
+st.set_page_config(layout="centered")
+
 st.title('Apagão Logístico')
 
 df = load_data()
@@ -282,29 +285,29 @@ with st.container():
                 hide_index=True
             )
     else:
-        with st.expander("🏆 Top 10 Municípios por Idade Média de Motoristas", expanded=True):
-            top_10_cities = df_city_risk.head(10)
+        with st.expander("🏆 Top 8 Municípios por Idade Média de Motoristas", expanded=True):
+            top_8_cities = df_city_risk.head(8)
             
-            # Helper para criar colunas dinamicamente e evitar erro se houver menos de 10 cidades
-            num_cities = len(top_10_cities)
+            # Helper para criar colunas dinamicamente e evitar erro se houver menos de 8 cidades
+            num_cities = len(top_8_cities)
             if num_cities > 0:
-                # Create 2 rows of 5 columns for the top 10
-                st.write("Top 1-5")
-                cols_1 = st.columns(5)
-                for i in range(min(5, num_cities)):
-                    row = top_10_cities.iloc[i]
+                # Create 2 rows of 4 columns for the top 8
+                st.write("Top 1-4")
+                cols_1 = st.columns(4)
+                for i in range(min(4, num_cities)):
+                    row = top_8_cities.iloc[i]
                     cols_1[i].metric(
                         label=f"{i + 1}. {row['descricao_municipio']}",
                         value=f"{row['Idade_Media']:.1f} anos",
                         help=f"Total de motoristas: {row['Total_Condutores']}"
                     )
                 
-                if num_cities > 5:
-                    st.write("Top 6-10")
-                    cols_2 = st.columns(5)
-                    for i in range(5, num_cities):
-                        row = top_10_cities.iloc[i]
-                        cols_2[i-5].metric(
+                if num_cities > 4:
+                    st.write("Top 5-8")
+                    cols_2 = st.columns(4)
+                    for i in range(4, num_cities):
+                        row = top_8_cities.iloc[i]
+                        cols_2[i-4].metric(
                             label=f"{i + 1}. {row['descricao_municipio']}",
                             value=f"{row['Idade_Media']:.1f} anos",
                             help=f"Total de motoristas: {row['Total_Condutores']}"
@@ -381,12 +384,18 @@ st.header("🚀 O Caminho Adiante: Recomendações Estratégicas")
 # CSS para estilização dos cards
 st.markdown("""
 <style>
+    .cards-container {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
     .consulting-card {
         background-color: #f0f2f6;
         border-radius: 10px;
         padding: 20px;
         border: 1px solid #e6e9ef;
-        height: 100%; /* Default for desktop */
+        height: 100%;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         display: flex;
         flex-direction: column;
@@ -406,38 +415,33 @@ st.markdown("""
 
     /* Media query for mobile devices */
     @media (max-width: 768px) {
+        .cards-container {
+            grid-template-columns: 1fr;
+        }
         .consulting-card {
-            height: auto; /* Override for mobile */
-            margin-bottom: 1rem; /* Add space between stacked cards */
+            height: auto;
+            margin-bottom: 1rem;
         }
     }
 </style>
 """, unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown(f"""
+cards_html = f"""
+<div class="cards-container">
     <div class="consulting-card">
         <h4>🎯 Gestão de Talentos</h4>
-        <p>Diante do índice de <b>{replacement_index:.2f}</b>, é urgente a criação de programas de 'Jovem Aprendiz da Estrada'. Recomendamos o subsídio para a mudança de categoria (B para D/E) e parcerias com centros de formação para reduzir a barreira de entrada financeira da Geração Z.</p>
+        <p>Diante do índice de <b>{replacement_index:.2f}</b>, é urgente a criação de programas de incentivo para novos motoristas.</p>
     </div>
-    """, unsafe_allow_html=True)
-
-with col2:
-    st.markdown("""
     <div class="consulting-card">
         <h4>🏛️ Infraestrutura e Estado</h4>
-        <p>O envelhecimento da frota exige estradas mais seguras e pontos de descanso dignos. Sugerimos incentivos fiscais para transportadoras que comprovem diversidade etária e programas de saúde focados no motorista sênior para prolongar sua vida profissional com qualidade.</p>
+        <p>O envelhecimento da frota exige estradas mais seguras e pontos de descanso dignos.</p>
     </div>
-    """, unsafe_allow_html=True)
-
-with col3:
-    st.markdown("""
     <div class="consulting-card">
         <h4>⚙️ Tecnologia Assistiva</h4>
-        <p>Para atrair nativos digitais e apoiar veteranos, a frota deve investir em telemetria avançada e automação de nível 2. A tecnologia deve atuar como um redutor de esforço físico e um atrativo de modernidade para o setor.</p>
+        <p>Para atrair nativos digitais e apoiar veteranos, a frota deve investir em automação. A tecnologia deve atuar como um redutor de esforço físico.</p>
     </div>
-    """, unsafe_allow_html=True)
+</div>
+"""
+st.markdown(cards_html, unsafe_allow_html=True)
 
-st.info("A crise de mão de obra não é apenas falta de pessoas, é uma crise de atratividade. O dado é o diagnóstico; a ação é a cura.")
+st.info("A crise de mão de obra não é apenas falta de pessoas, é uma crise de atratividade.")
