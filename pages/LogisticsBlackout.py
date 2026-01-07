@@ -197,7 +197,8 @@ with st.container():
         mode='lines+markers+text',
         line=dict(color='#D50000', width=3), # Vermelho para destaque
         text=[f'{x:.0f}%' for x in df_pivot['Pct_EAR']],
-        textposition='top center'
+        textposition='top center',
+        hovertemplate='&#37; Conversão EAR: <b>%{y:.0f}%</b><extra></extra>'
     ))
     
     fig_ear.update_layout(
