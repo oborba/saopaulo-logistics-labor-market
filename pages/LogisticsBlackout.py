@@ -31,7 +31,7 @@ count_veterans = df_alert[df_alert['faixa_etaria'].isin(veterans_ages)]['qtd_con
 replacement_index = count_new_entrants / count_veterans if count_veterans > 0 else 0.0
 
 # 4. UI: Headline e Alerta
-st.markdown('### 🚨 O Alerta: Envelhecimento da Mão de Obra')
+st.markdown('### 🚨 Alerta: Envelhecimento da Mão de Obra')
 
 st.metric(
     label="Índice de Reposição de Motoristas",
@@ -44,7 +44,7 @@ st.metric(
 alert_msg = (
     f"**Análise Crítica:** Para cada 1 motorista veterano (51-70 anos) próximo da aposentadoria, o mercado repõe apenas **{replacement_index:.2f}** novos condutores.\n\n"
     f"**Base de Comparação:** O cálculo confronta **{f'{count_veterans:,.0f}'.replace(',', '.')}** veteranos (51-70 anos) contra apenas **{f'{count_new_entrants:,.0f}'.replace(',', '.')}** novos entrantes (18-30 anos).\n\n"
-    "Como incentivar a **Geração Z** a entrar no setor? Talvez a pouca presença dessas pessoas sejam devido a barreiras estruturais: alto custo da CNH, estilo de vida nômade, insegurança nas estradas e a preferência pela economia digital."
+    "Como incentivar os jovens a entrar no setor?"
 )
 
 if replacement_index < 0.5:
