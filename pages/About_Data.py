@@ -12,16 +12,12 @@ def main():
     ### Fonte e Metodologia
     
     Este projeto utiliza dados públicos disponibilizados pelo **Detran SP**. 
-    O conjunto de dados original refere-se aos **Condutores Habilitados Ativos** (referência: **dezembro de 2025**) e está disponível no portal de [Dados Abertos](https://www.detran.sp.gov.br/detransp/pb/informacoes/transparencia/dados_abertos?id=dados_abertos).
+    O conjunto de dados original refere-se aos **Condutores Habilitados Ativos** (referência: **novembro de 2025**) e está disponível no portal de [Dados Abertos](https://www.detran.sp.gov.br/detransp/pb/informacoes/transparencia/dados_abertos?id=dados_abertos).
     
     **O que foi feito neste projeto:**
     1. **Coleta:** Os dados foram extraídos do portal de dados abertos.
     2. **Enriquecimento:** Adicionamos as coordenadas geográficas (Latitude e Longitude) de cada município para permitir a visualização em mapas de calor.
-    3. **Agregação:** Os dados representam contagens (não dados individuais sensíveis), agrupados por:
-        - Município
-        - Categoria da CNH
-        - Faixa Etária
-        - Indicador de Atividade Remunerada (EAR)
+    3. **Análise:** Foram realizadas algumas análises para entender a situação do mercado de trabalho logístico. 
     """)
 
     # Load data using your existing utility
@@ -40,9 +36,16 @@ def main():
         {"Coluna": "descricao_municipio", "Descrição": "Nome da cidade do estado de São Paulo"},
         {"Coluna": "categoria_cnh", "Descrição": "Categoria da habilitação (A, B, C, D, E e combinações)"},
         {"Coluna": "faixa_etaria", "Descrição": "Grupo de idade do condutor"},
+        {"Coluna": "genero", "Descrição": "Gênero do condutor"},
+        {"Coluna": "pessoa_com_deficiencia", "Descrição": "Indicador de Pessoa com Deficiência (S/N)"},
         {"Coluna": "exerce_atividade_remunerada", "Descrição": "'S' para Sim, 'N' para Não (EAR)"},
         {"Coluna": "qtd_condutores", "Descrição": "Quantidade total de condutores naquele grupo"},
-        {"Coluna": "lat / lon", "Descrição": "Coordenadas geográficas do centróide da cidade"},
+        {"Coluna": "condutor_bloqueado", "Descrição": "Indica se a CNH possui algum bloqueio"},
+        {"Coluna": "mes_ref", "Descrição": "Mês de referência dos dados"},
+        {"Coluna": "ano_ref", "Descrição": "Ano de referência dos dados"},
+        {"Coluna": "codigo_ibge", "Descrição": "Código IBGE do município"},
+        {"Coluna": "tipo_atuacao", "Descrição": "Gig Economy/Apps, Logística Pesada/Tradicional ou Amador"},
+        {"Coluna": "lat / lon", "Descrição": "Coordenadas geográficas da cidade"},
     ])
     st.table(data_dict)
 
@@ -51,8 +54,8 @@ def main():
     # 3. Preview and Download
     st.subheader("Acesso aos Dados")
     
-    st.write("Visualização das primeiras 50 linhas do dataset processado:")
-    st.dataframe(df.head(50), use_container_width=True)
+    st.write("Visualização das primeiras 10 linhas do dataset processado:")
+    st.dataframe(df.head(10), use_container_width=True)
 
     # Convert DF to CSV for download
     csv = df.to_csv(index=False).encode('utf-8')

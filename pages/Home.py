@@ -59,7 +59,7 @@ def main():
     # --- Footer / Context ---
     st.markdown("""
     <div style='text-align: center; color: grey; font-size: 0.8em;'>
-        Dados baseados no portal de transparência do Detran SP (Dez/2025).<br>
+        Dados baseados no portal de transparência do Detran SP (Novembro de 2025).<br>
         Desenvolvido para análise de impacto econômico e social.
     </div>
     """, unsafe_allow_html=True)
