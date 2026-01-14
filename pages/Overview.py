@@ -17,6 +17,13 @@ def main():
     heavy_categories = ['C', 'D', 'E', 'AC', 'AD', 'AE']
     heavy_drivers_df = df[df['categoria_cnh'].isin(heavy_categories)].copy()
 
+    # Logic for categories (Pre-processing)
+    def simplify_category(cat):
+        if 'E' in cat: return 'E'
+        if 'D' in cat: return 'D'
+        return 'C'
+    heavy_drivers_df['categoria_simple'] = heavy_drivers_df['categoria_cnh'].apply(simplify_category)
+
     total_heavy_drivers = heavy_drivers_df['qtd_condutores'].sum()
     ear_heavy_drivers = heavy_drivers_df[heavy_drivers_df['exerce_atividade_remunerada'] == 'S']['qtd_condutores'].sum()
     
@@ -43,16 +50,68 @@ def main():
     
     st.divider()
     
+    # --- ROW 1.5: Blocked Drivers (New Section) ---
+    st.subheader("Saúde da Frota e Disponibilidade Legal")
+    
+    blocked_count = heavy_drivers_df[heavy_drivers_df['condutor_bloqueado'] == 'S']['qtd_condutores'].sum()
+    blocked_pct = (blocked_count / total_heavy_drivers) * 100
+    active_count = total_heavy_drivers - blocked_count
+    
+    col_b1, col_b2 = st.columns([1, 2])
+    
+    with col_b1:
+        st.metric(
+            label="Condutores Bloqueados", 
+            value=f"{blocked_count:,}", 
+            delta=f"-{blocked_pct:.2f}% da frota",
+            delta_color="inverse",
+            help="Motoristas com CNH suspensa, cassada ou vencida (Impedidos de dirigir)"
+        )
+        st.caption(f"De um total de {total_heavy_drivers:,} condutores, apenas {active_count:,} estão aptos legalmente.")
+
+    with col_b2:
+        df_block = heavy_drivers_df.groupby(['categoria_simple', 'condutor_bloqueado'])['qtd_condutores'].sum().unstack(fill_value=0)
+        # Ensure columns exist
+        for c in ['S', 'N']:
+            if c not in df_block.columns: df_block[c] = 0
+            
+        # Calculate percentages for text
+        df_block['Total'] = df_block['S'] + df_block['N']
+        df_block['Pct_Block'] = (df_block['S'] / df_block['Total']) * 100
+        
+        fig_block = go.Figure()
+        fig_block.add_trace(go.Bar(y=df_block.index, x=df_block['N'], name='Ativos (Aptos)', orientation='h', marker_color='#2ecc71'))
+        fig_block.add_trace(go.Bar(
+            y=df_block.index, x=df_block['S'], name='Bloqueados', orientation='h', marker_color='#e74c3c',
+            text=df_block['Pct_Block'].apply(lambda x: f"{x:.1f}%"), textposition='auto'
+        ))
+        fig_block.update_layout(title="Taxa de Bloqueio por Categoria", barmode='stack', margin=dict(t=30, b=20, l=20, r=20), height=250)
+        st.plotly_chart(fig_block, use_container_width=True)
+
+    # --- Blocked by Age Group ---
+    st.markdown("##### Bloqueios por Faixa Etária")
+    df_block_age = heavy_drivers_df[heavy_drivers_df['condutor_bloqueado'] == 'S'].groupby('faixa_etaria')['qtd_condutores'].sum().reset_index()
+    
+    fig_block_age = go.Figure(go.Bar(
+        x=df_block_age['faixa_etaria'],
+        y=df_block_age['qtd_condutores'],
+        marker_color='#e74c3c',
+        text=df_block_age['qtd_condutores'],
+        textposition='auto',
+        texttemplate='%{text:.2s}'
+    ))
+    fig_block_age.update_layout(
+        title="Volume de Condutores Bloqueados por Idade",
+        xaxis=dict(tickangle=-45),
+        margin=dict(t=30, b=50, l=20, r=20),
+        height=300
+    )
+    st.plotly_chart(fig_block_age, use_container_width=True)
+
+    st.divider()
+
     # --- ROW 2: Category & Professionalization ---
     st.subheader("Perfil da Categoria e Profissionalização")
-    
-    # Logic for categories
-    def simplify_category(cat):
-        if 'E' in cat: return 'E'
-        if 'D' in cat: return 'D'
-        return 'C'
-    
-    heavy_drivers_df['categoria_simple'] = heavy_drivers_df['categoria_cnh'].apply(simplify_category)
     
     c1, c2 = st.columns(2)
     
